@@ -1,17 +1,47 @@
 <script setup lang="ts">
 import { reactive } from "vue";
+import gql from "graphql-tag";
+import { useMutation } from "@vue/apollo-composable";
+import ProgressSpinner from "primevue/progressspinner";
+import { useRouter } from "vue-router";
+
+const router = useRouter();
 
 const inputs = reactive({ firstname: "", lastname: "", email: "", password: "" });
 
-const onSubmit = () => {
-  console.log(inputs);
+const SIGN_UP_MUTATION = gql`
+  mutation Signup($name: String!, $email: String!, $password: String!) {
+    signUp(name: $name, email: $email, password: $password) {
+      id
+      name
+      email
+    }
+  }
+`;
+
+const { mutate: signUp, loading, error } = useMutation(SIGN_UP_MUTATION);
+
+const onSubmit = async () => {
+  await signUp({ ...inputs, name: `${inputs.firstname} ${inputs.lastname}` });
+  router.push({ path: "/auth/login" });
 };
+
+const reload = () => window.location.reload();
 </script>
 
 <template>
   <div class="flex justify-center bg-[#20212C] px-4 py-12 rounded-md md:mx-32">
     <div class="w-full md:w-[70%]">
-      <form @submit.prevent="onSubmit">
+      <div v-if="error" class="flex flex-col space-y-4 items-center">
+        <p>Something went wrong...</p>
+        <button
+          @click="reload"
+          class="flex justify-center cursor-pointer bg-[#635FC7] text-white font-bold text-sm px-4 py-2 rounded-[20px] hover:bg-[#A8A4FF]"
+        >
+          Reload this page
+        </button>
+      </div>
+      <form v-else @submit.prevent="onSubmit">
         <h2 class="font-bold text-lg mb-6 text-white">Sign Up</h2>
 
         <div className="firstname flex flex-col mb-4">
@@ -63,10 +93,19 @@ const onSubmit = () => {
         </div>
 
         <button
-          class="flex w-full justify-center cursor-pointer bg-[#635FC7] text-white font-bold text-sm px-4 py-2 rounded-[20px] hover:bg-[#A8A4FF]"
+          class="flex w-full items-center justify-center cursor-pointer bg-[#635FC7] text-white font-bold text-sm px-4 py-2 rounded-[20px] hover:bg-[#A8A4FF]"
           type="submit"
         >
-          Sign up
+          <div class="flex space-x-1 items-center">
+            <ProgressSpinner
+              v-if="loading"
+              style="width: 25px; height: 25px"
+              strokeWidth="4"
+              animationDuration=".5s"
+              aria-label="logging in"
+            />
+            <div>Sign up</div>
+          </div>
         </button>
       </form>
     </div>
