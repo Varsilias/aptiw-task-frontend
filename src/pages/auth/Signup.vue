@@ -1,23 +1,13 @@
 <script setup lang="ts">
 import { reactive } from "vue";
-import gql from "graphql-tag";
 import { useMutation } from "@vue/apollo-composable";
 import ProgressSpinner from "primevue/progressspinner";
 import { useRouter } from "vue-router";
+import { SIGN_UP_MUTATION } from "../../graphql";
 
 const router = useRouter();
 
 const inputs = reactive({ firstname: "", lastname: "", email: "", password: "" });
-
-const SIGN_UP_MUTATION = gql`
-  mutation Signup($name: String!, $email: String!, $password: String!) {
-    signUp(name: $name, email: $email, password: $password) {
-      id
-      name
-      email
-    }
-  }
-`;
 
 const { mutate: signUp, loading, error } = useMutation(SIGN_UP_MUTATION);
 

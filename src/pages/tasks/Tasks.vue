@@ -1,46 +1,21 @@
 <script setup lang="ts">
-import gql from "graphql-tag";
 import { useQuery, useMutation } from "@vue/apollo-composable";
 import ProgressSpinner from "primevue/progressspinner";
 import StatusButton from "../../components/buttons/StatusButton.vue";
 import { DATE_FORMAT } from "../../utils/index";
-import dayjs from "dayjs";
-import customParseFormat from "dayjs/plugin/customParseFormat";
-import advancedFormat from "dayjs/plugin/advancedFormat";
 import { useRouter } from "vue-router";
+import { GET_TASKS_QUERY, LOGOUT_MUTATION } from "../../graphql";
+import { formatDate } from "../../utils/index";
 
 const router = useRouter();
 
-dayjs.extend(customParseFormat);
-dayjs.extend(advancedFormat);
-
-const TASKS_QUERY = gql`
-  query getTasks {
-    tasks {
-      id
-      title
-      description
-      status
-      due_date
-    }
-  }
-`;
-
-const LOGOUT_MUTATION = gql`
-  mutation {
-    logout {
-      id
-      name
-      email
-    }
-  }
-`;
-
-const { loading, result, error } = useQuery(TASKS_QUERY);
+const { loading, result, error } = useQuery(GET_TASKS_QUERY);
 const { loading: logoutLoading, mutate: logout } = useMutation(LOGOUT_MUTATION);
 
-console.log({ loading, result, error });
-
+const isNearStartDate = (dueDate?: Date | string) => {
+  const today = formatDate();
+  return formatDate(dueDate).isAfter(today) && formatDate(dueDate).diff(today) <= 3;
+};
 const onLogout = async () => {
   await logout({});
   localStorage.clear();
@@ -112,16 +87,11 @@ const reload = () => window.location.reload();
           </div>
           <div class="title_due space-y-8">
             <p class="text-sm text-gray-300">
-              <strong>Due: </strong>{{ dayjs(task?.due_date).format(DATE_FORMAT) }}
+              <strong>Due: </strong>{{ formatDate(task?.due_date).format(DATE_FORMAT) }}
             </p>
             <p><StatusButton :text="task.status" /></p>
           </div>
-          <div
-            v-if="
-              dayjs(task?.due_date).isAfter(dayjs()) && dayjs(task?.due_date).diff(dayjs()) <= 3
-            "
-            class="h-5 w-5 bg-red-950 rounded-full"
-          ></div>
+          <div v-if="isNearStartDate(task?.due_date)" class="h-5 w-5 bg-red-950 rounded-full"></div>
         </div>
       </RouterLink>
     </div>

@@ -1,31 +1,19 @@
 <script setup lang="ts">
 import { reactive } from "vue";
-import gql from "graphql-tag";
 import { useMutation } from "@vue/apollo-composable";
 import ProgressSpinner from "primevue/progressspinner";
 import { useRouter } from "vue-router";
+import { LOGIN_MUTATION } from "../../graphql";
 
 const router = useRouter();
 
 const inputs = reactive({ email: "", password: "" });
 
-const LOGIN_MUTATION = gql`
-  mutation Login($email: String!, $password: String!) {
-    login(email: $email, password: $password) {
-      access_token
-      user {
-        id
-        name
-        email
-      }
-    }
-  }
-`;
-
 const { mutate: login, loading, error } = useMutation(LOGIN_MUTATION);
 
 const onSubmit = async () => {
   // Perform further validation before login
+  // TODO: Handle Error
   const data = await login(inputs);
   localStorage.setItem("access_token", data?.data?.login?.access_token);
   router.push({ path: "/tasks", replace: true });

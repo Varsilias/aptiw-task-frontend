@@ -1,16 +1,11 @@
 <script setup lang="ts">
 import { reactive, ref, onMounted } from "vue";
-import gql from "graphql-tag";
 import { useMutation, useQuery } from "@vue/apollo-composable";
 import ProgressSpinner from "primevue/progressspinner";
 import { useRouter, useRoute } from "vue-router";
-import dayjs from "dayjs";
-import customParseFormat from "dayjs/plugin/customParseFormat";
-import advancedFormat from "dayjs/plugin/advancedFormat";
 import { DATETIME_FORMAT } from "../../utils/index";
-
-dayjs.extend(customParseFormat);
-dayjs.extend(advancedFormat);
+import { GET_TASK_QUERY, UPDATE_TASK_MUTATION } from "../../graphql";
+import { formatDate } from "../../utils/index";
 
 const route = useRoute();
 const router = useRouter();
@@ -26,7 +21,7 @@ let inputs = reactive({
 
 onMounted(() => {
   taskId.value = route.params.taskId;
-  const { result: task } = useQuery(TASKS_QUERY, { id: taskId });
+  const { result: task } = useQuery(GET_TASK_QUERY, { id: taskId });
 
   if (task.value) {
     const data = task.value.task;
@@ -38,61 +33,15 @@ onMounted(() => {
   }
 });
 
-const TASKS_QUERY = gql`
-  query getTaskById($id: ID!) {
-    task(id: $id) {
-      title
-      description
-      due_date
-      status
-    }
-  }
-`;
-
-// watch(taskLoading, async () => {
-//   const data = task?.value;
-//   console.log(data);
-//   inputs.title = data.title;
-//   inputs.description = data.description;
-//   inputs.due_date = data.due_date;
-//   inputs.status = data.status;
-// });
-
-const UPDATE_TASK_MUTATION = gql`
-  mutation UpdateTask(
-    $id: ID!
-    $title: String
-    $description: String
-    $due_date: DateTime
-    $status: TaskStatus
-  ) {
-    updateTask(
-      id: $id
-      title: $title
-      description: $description
-      due_date: $due_date
-      status: $status
-    ) {
-      id
-      title
-      description
-      due_date
-      status
-      created_at
-      updated_at
-    }
-  }
-`;
-
 const { mutate: updateTask, loading, error } = useMutation(UPDATE_TASK_MUTATION);
 
 const onSubmit = async () => {
   // Perform further validation before login
-  console.log(dayjs(inputs.due_date).format("YYYY-MM-DD HH:mm:ss"));
+  // and handle error appropriately
 
   await updateTask({
     ...inputs,
-    due_date: dayjs(inputs.due_date).format(DATETIME_FORMAT),
+    due_date: formatDate(inputs.due_date).format(DATETIME_FORMAT),
     id: taskId.value,
   });
   router.push({ path: "/tasks" });

@@ -1,16 +1,11 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
-import gql from "graphql-tag";
 import { DATE_FORMAT, formatString } from "../../utils/index";
 import { useQuery, useMutation } from "@vue/apollo-composable";
-import dayjs from "dayjs";
-import customParseFormat from "dayjs/plugin/customParseFormat";
-import advancedFormat from "dayjs/plugin/advancedFormat";
 import { useRoute, useRouter } from "vue-router";
 import ProgressSpinner from "primevue/progressspinner";
-
-dayjs.extend(customParseFormat);
-dayjs.extend(advancedFormat);
+import { GET_TASK_QUERY, DELETE_TASK_MUTATION } from "../../graphql";
+import { formatDate } from "../../utils/index";
 
 const route = useRoute();
 const router = useRouter();
@@ -21,43 +16,17 @@ onMounted(() => {
   taskId.value = route.params.taskId;
 });
 
-const TASKS_QUERY = gql`
-  query getTaskById($id: ID!) {
-    task(id: $id) {
-      title
-      description
-      due_date
-      status
-    }
-  }
-`;
-
-const DELETE_TASK_MUTATION = gql`
-  mutation ($id: ID!) {
-    deleteTask(id: $id) {
-      id
-      title
-      description
-      status
-      user {
-        id
-        name
-      }
-    }
-  }
-`;
-
 const {
   mutate: deleteTask,
   loading: deleteLoading,
   error: deleteError,
 } = useMutation(DELETE_TASK_MUTATION);
 
-const { loading, result, error } = useQuery(TASKS_QUERY, { id: taskId });
+const { loading, result, error } = useQuery(GET_TASK_QUERY, { id: taskId });
 
 const onDeleteTask = async () => {
-  const data = await deleteTask({ id: taskId.value });
-  console.log("DELETE_RESULT", data);
+  // TODO: Handle Error
+  await deleteTask({ id: taskId.value });
   router.push("/tasks");
 };
 
@@ -126,7 +95,7 @@ const reload = () => window.location.reload();
           <span class="font-medium text-sm text-gray-400 text-right">{{
             Number.isNaN(Date.parse(task[1] as string))
               ? task[1]
-              : dayjs(task[1] as string).format(DATE_FORMAT)
+              : formatDate(task[1] as string).format(DATE_FORMAT)
           }}</span>
         </li>
       </ul>

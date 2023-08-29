@@ -1,50 +1,26 @@
 <script setup lang="ts">
 import { reactive } from "vue";
-import gql from "graphql-tag";
 import { useMutation } from "@vue/apollo-composable";
 import ProgressSpinner from "primevue/progressspinner";
 import { useRouter } from "vue-router";
-import dayjs from "dayjs";
-import customParseFormat from "dayjs/plugin/customParseFormat";
-import advancedFormat from "dayjs/plugin/advancedFormat";
 import { DATETIME_FORMAT } from "../../utils/index";
-
-dayjs.extend(customParseFormat);
-dayjs.extend(advancedFormat);
+import { CREATE_TASK_MUTATION } from "../../graphql";
+import { formatDate } from "../../utils/index";
 
 const router = useRouter();
 
 const inputs = reactive({ title: "", description: "", due_date: "", status: "" });
 
-const CREATE_TASK_MUTATION = gql`
-  mutation CreateTask(
-    $title: String!
-    $description: String!
-    $due_date: DateTime!
-    $status: TaskStatus!
-  ) {
-    createTask(title: $title, description: $description, due_date: $due_date, status: $status) {
-      id
-      title
-      description
-      due_date
-      status
-      created_at
-      updated_at
-    }
-  }
-`;
-
 const { mutate: createTask, loading, error } = useMutation(CREATE_TASK_MUTATION);
 
 const onSubmit = async () => {
-  // Perform further validation before login
+  // Perform further validation before creating task
+  // Handle Error as appropriate
 
-  const data = await createTask({
+  await createTask({
     ...inputs,
-    due_date: dayjs(inputs.due_date).format(DATETIME_FORMAT),
+    due_date: formatDate(inputs.due_date).format(DATETIME_FORMAT),
   });
-  console.log(data);
   router.push({ path: "/tasks" });
 };
 
