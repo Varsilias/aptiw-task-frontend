@@ -19,6 +19,7 @@ const isNearStartDate = (dueDate?: Date | string) => {
 const onLogout = async () => {
   await logout({});
   localStorage.clear();
+  window.location.reload();
   router.push({ path: "/auth/login" });
 };
 
@@ -74,26 +75,41 @@ const reload = () => window.location.reload();
         aria-label="Task Loading"
       />
     </div>
-    <div v-else v-for="task in result?.tasks" :key="task.id">
-      <RouterLink :to="{ path: `/tasks/${task.id}` }">
-        <div
-          class="p-4 flex rounded-lg justify-between items-center mb-6 border bg-[#20212C] border-[#828FA340]"
-        >
-          <div class="title_due w-[70%] text-left space-y-8">
-            <p class="text-lg font-bold">{{ task.title }}</p>
-            <p class="font-medium text-sm text-gray-400 justify-items-start">
-              {{ task.description }}
-            </p>
-          </div>
-          <div class="title_due space-y-8">
-            <p class="text-sm text-gray-300">
-              <strong>Due: </strong>{{ formatDate(task?.due_date).format(DATE_FORMAT) }}
-            </p>
-            <p><StatusButton :text="task.status" /></p>
-          </div>
-          <div v-if="isNearStartDate(task?.due_date)" class="h-5 w-5 bg-red-950 rounded-full"></div>
+
+    <div v-else>
+      <div v-if="result?.tasks?.length <= 0" class="flex justify-center h-screen">
+        <div class="text-center">
+          <h1 class="font-bold text-lg">No Tasks Available</h1>
+          <p>Proceed to create new task</p>
         </div>
-      </RouterLink>
+      </div>
+
+      <div v-else>
+        <div v-for="task in result?.tasks" :key="task.id">
+          <RouterLink :to="{ path: `/tasks/${task.id}` }">
+            <div
+              class="p-4 flex rounded-lg justify-between items-center mb-6 border bg-[#20212C] border-[#828FA340]"
+            >
+              <div class="title_due w-[70%] text-left space-y-8">
+                <p class="text-lg font-bold">{{ task.title }}</p>
+                <p class="font-medium text-sm text-gray-400 justify-items-start">
+                  {{ task.description }}
+                </p>
+              </div>
+              <div class="title_due space-y-8">
+                <p class="text-sm text-gray-300">
+                  <strong>Due: </strong>{{ formatDate(task?.due_date).format(DATE_FORMAT) }}
+                </p>
+                <p><StatusButton :text="task.status" /></p>
+              </div>
+              <div
+                v-if="isNearStartDate(task?.due_date)"
+                class="h-5 w-5 bg-red-950 rounded-full"
+              ></div>
+            </div>
+          </RouterLink>
+        </div>
+      </div>
     </div>
   </div>
 </template>
